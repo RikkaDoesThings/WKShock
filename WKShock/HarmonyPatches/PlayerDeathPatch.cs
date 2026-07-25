@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using UnityEngine;
-using PiShockLibrary.Enums;
 
 namespace WKShock.HarmonyPatches
 {
@@ -20,9 +19,9 @@ namespace WKShock.HarmonyPatches
             if (WKShockPlugin.PiShock.EnableDeathShock.Value)
             {
                 WKShockPlugin.PiShock.Controller.OperatePiShock(
-                    WKShockPlugin.PiShock.DeathShockIntensity.Value, 
-                    WKShockPlugin.PiShock.DeathShockDuration.Value, 
-                    PiShockOperations.Shock
+                    WKShockPlugin.PiShock.DeathShockIntensity.Value,
+                    WKShockPlugin.PiShock.DeathShockDuration.Value,
+                    "shock"
                 );
             }
         }

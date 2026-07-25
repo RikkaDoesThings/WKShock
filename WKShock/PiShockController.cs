@@ -1,44 +1,71 @@
-﻿//Code borrowed and modified from https://github.com/MxPuffin/REPOShock/blob/master/src/PiShockController.cs
-using PiShockClassLibrary.Services;
-using PiShockClassLibrary.Models;
-using PiShockLibrary.Models;
-using PiShockLibrary.Enums;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
-using System.Linq;
 using BepInEx.Logging;
 
 namespace WKShock
 {
     public class PiShockController
     {
-        private PiShockAPI _piShockAPI;
-        private PiShockUserInfo _userInfo;
-        private ManualLogSource _logger;
-        
-        public PiShockController(PiShockAPI piShockAPI, PiShockUserInfo piShockUserInfo, ManualLogSource logger)
+        private readonly HttpClient _httpClient;
+        private readonly string _baseUrl;
+        private readonly string _apiToken;
+        private readonly List<string> _deviceIds;
+        private readonly ManualLogSource _logger;
+
+        public PiShockController(HttpClient httpClient, string baseUrl, string apiToken, List<string> deviceIds, ManualLogSource logger)
         {
-            _piShockAPI = piShockAPI;
-            _userInfo = piShockUserInfo;
+            _httpClient = httpClient;
+            _baseUrl = baseUrl;
+            _apiToken = apiToken;
+            _deviceIds = deviceIds;
             _logger = logger;
         }
 
-        public void OperatePiShock(int intensity, int duration, PiShockOperations op)
+        public void OperatePiShock(int intensity, int duration, string operation)
         {
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
-                var tasks = new List<Task<bool>>();
-
-                foreach (var device in _userInfo.Devices)
+                var normalizedOperation = (operation ?? string.Empty).Trim().ToLowerInvariant();
+                if (normalizedOperation != "shock" && normalizedOperation != "vibrate")
                 {
-                    var body = new PiShockOperateRequestBody(_userInfo, op, device.ShareCode, intensity, duration, "White Knuckle");
-                    tasks.Add(_piShockAPI.SendOperationRequest(body));
+                    _logger.LogWarning($"Unsupported OpenShock operation '{operation}'.");
+                    return;
                 }
 
-                var results = await Task.WhenAll(tasks);
-                if (results.Any(success => !success))
+                var safeIntensity = Math.Max(1, Math.Min(100, intensity));
+                var safeDuration = Math.Max(1, Math.Min(10, duration));
+                var payload = string.Format(CultureInfo.InvariantCulture, "{{\"intensity\":{0},\"duration\":{1}}}", safeIntensity, safeDuration);
+
+                foreach (var deviceId in _deviceIds)
                 {
-                    _logger.LogWarning("One or more PiShock requests failed to execute!");
+                    var endpoint = $"{_baseUrl.TrimEnd('/')}/v1/shockers/{Uri.EscapeDataString(deviceId)}/{normalizedOperation}";
+                    using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint))
+                    {
+                        request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+                        if (!string.IsNullOrWhiteSpace(_apiToken))
+                        {
+                            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
+                        }
+
+                        try
+                        {
+                            var response = await _httpClient.SendAsync(request);
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                var body = await response.Content.ReadAsStringAsync();
+                                _logger.LogWarning($"OpenShock request failed for device {deviceId}: {(int)response.StatusCode} {response.ReasonPhrase} - {body}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"OpenShock request threw for device {deviceId}: {ex.Message}");
+                        }
+                    }
                 }
             });
         }

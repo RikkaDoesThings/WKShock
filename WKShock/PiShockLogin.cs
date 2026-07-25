@@ -1,22 +1,20 @@
-﻿//Code borrowed and modified from https://github.com/MxPuffin/REPOShock/blob/master/src/REPOShock.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using PiShockClassLibrary.Models;
-using PiShockClassLibrary.Services;
 
 namespace WKShock
 {
     public class PiShockLogin
     {
         private readonly ManualLogSource _logger;
-        private readonly PiShockAPI _api;
-        private ConfigEntry<string> _username;
-        private ConfigEntry<string> _apiKey;
-        private ConfigEntry<string> _shareCodes;
+        private readonly HttpClient _httpClient;
+        private ConfigEntry<bool> _useOpenShock;
+        private ConfigEntry<string> _apiBaseUrl;
+        private ConfigEntry<string> _apiToken;
+        private ConfigEntry<string> _deviceIds;
         public ConfigEntry<bool> ModEnabled { get; private set; }
         public ConfigEntry<bool> EnableShock { get; private set; }
         public ConfigEntry<int> ShockIntensity { get; private set; }
@@ -32,10 +30,11 @@ namespace WKShock
         public PiShockLogin(ConfigFile config, ManualLogSource logger)
         {
             _logger = logger;
-            _api = new PiShockAPI(new HttpClient());
-            _username = config.Bind("1. PiShock Credentials", "Username", "", "Your PiShock Username");
-            _apiKey = config.Bind("1. PiShock Credentials", "APIKey", "", "Your PiShock API Key");
-            _shareCodes = config.Bind("1. PiShock Credentials", "ShareCodes", "", "Comma separated share codes");
+            _httpClient = new HttpClient();
+            _useOpenShock = config.Bind("1. Shock Provider", "Use OpenShock", true, "Set to true to use OpenShock, false to use PiShock.");
+            _apiBaseUrl = config.Bind("1. Shock Provider", "API Base URL", "https://api.openshock.org", "OpenShock API base URL.");
+            _apiToken = config.Bind("1. Shock Provider", "API Token", "", "Optional bearer token for OpenShock.");
+            _deviceIds = config.Bind("1. Shock Provider", "Device IDs", "", "Comma-separated OpenShock device IDs.");
             ModEnabled = config.Bind("2. Gameplay Settings", "Mod Enabled", true, "Master switch to enable or disable all mod triggers.");
             EnableShock = config.Bind("3. Shock Settings", "Enable Shock", true, "Send a shock when taking damage.");
             ShockIntensity = config.Bind("3. Shock Settings", "Shock Intensity", 25, new ConfigDescription("Intensity of the shock (1-100).", new AcceptableValueRange<int>(1, 100)));
@@ -52,37 +51,44 @@ namespace WKShock
         {
             try
             {
-                if (string.IsNullOrEmpty(_username.Value) || string.IsNullOrEmpty(_apiKey.Value))
+                if (_useOpenShock.Value)
                 {
-                    _logger.LogError("PiShock: Username or APIKey missing in config file!");
-                    return;
-                }
+                    if (string.IsNullOrWhiteSpace(_deviceIds.Value))
+                    {
+                        _logger.LogError("OpenShock: Device IDs missing in config file!");
+                        return;
+                    }
 
-                if (string.IsNullOrEmpty(_shareCodes.Value))
+                    var deviceIds = new List<string>();
+                    foreach (var deviceId in _deviceIds.Value.Split(','))
+                    {
+                        var trimmed = deviceId.Trim();
+                        if (!string.IsNullOrWhiteSpace(trimmed))
+                        {
+                            deviceIds.Add(trimmed);
+                        }
+                    }
+
+                    if (deviceIds.Count == 0)
+                    {
+                        _logger.LogError("OpenShock: No valid device IDs were found in config file!");
+                        return;
+                    }
+
+                    Controller = new PiShockController(_httpClient, _apiBaseUrl.Value, _apiToken.Value, deviceIds, _logger);
+                    _logger.LogInfo("OpenShock initialization successful.");
+                }
+                else
                 {
-                    _logger.LogError("PiShock: ShareCode missing in config file!");
-                    return;
+                    _logger.LogInfo("PiShock mode selected; no additional initialization is performed in this build.");
                 }
-
-                var sharecodes = _shareCodes.Value.Split(',');
-                var devices = new List<PiShockDeviceInfo>();
-
-                for (int i = 0; i < sharecodes.Length; i++)
-                {
-                    devices.Add(new PiShockDeviceInfo($"Shocker {i}", sharecodes[i].Trim()));
-                }
-
-                var userInfo = await _api.GetUserInfoFromAPI(_username.Value, _apiKey.Value);
-                userInfo = userInfo.WithDevices(devices);
-
-                Controller = new PiShockController(_api, userInfo, _logger); 
-
-                _logger.LogInfo("PiShock login successful.");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"PiShock login failed: {ex.Message}");
+                _logger.LogError($"Shock backend initialization failed: {ex.Message}");
             }
+
+            await Task.CompletedTask;
         }
     }
 }

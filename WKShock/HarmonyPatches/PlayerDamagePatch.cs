@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using UnityEngine;
-using PiShockLibrary.Enums;
 
 namespace WKShock.HarmonyPatches
 {
@@ -22,18 +21,18 @@ namespace WKShock.HarmonyPatches
             if (WKShockPlugin.PiShock.EnableShock.Value)
             {
                 WKShockPlugin.PiShock.Controller.OperatePiShock(
-                    WKShockPlugin.PiShock.ShockIntensity.Value, 
-                    WKShockPlugin.PiShock.ShockDuration.Value, 
-                    PiShockOperations.Shock
+                    WKShockPlugin.PiShock.ShockIntensity.Value,
+                    WKShockPlugin.PiShock.ShockDuration.Value,
+                    "shock"
                 );
             }
 
             if (WKShockPlugin.PiShock.EnableVibrate.Value)
             {
                 WKShockPlugin.PiShock.Controller.OperatePiShock(
-                    WKShockPlugin.PiShock.VibrateIntensity.Value, 
-                    WKShockPlugin.PiShock.VibrateDuration.Value, 
-                    PiShockOperations.Vibrate
+                    WKShockPlugin.PiShock.VibrateIntensity.Value,
+                    WKShockPlugin.PiShock.VibrateDuration.Value,
+                    "vibrate"
                 );
             }
         }
