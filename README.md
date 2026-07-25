@@ -1,3 +1,8 @@
+```
+Hella finicky btw, remove the "Shock Credentials" section of the config and only use "Shock Provider"
+PiShock might not work.
+```
+
 # About
 A PiShock/OpenShock integration mod for White Knuckle.\
 The mod uses the [PiShockLibrary](https://github.com/MxPuffin/PiShockLibrary) and some code from [REPOShock](https://github.com/MxPuffin/REPOShock) by [MxPuffin](https://github.com/MxPuffin).
