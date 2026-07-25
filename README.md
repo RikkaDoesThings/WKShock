@@ -1,5 +1,5 @@
 # About
-A PiShock/OpenShock integration mod for White Knuckle.
+A PiShock/OpenShock integration mod for White Knuckle.\
 The mod uses the [PiShockLibrary](https://github.com/MxPuffin/PiShockLibrary) and some code from [REPOShock](https://github.com/MxPuffin/REPOShock) by [MxPuffin](https://github.com/MxPuffin).
 Created by [Xironix/SonexFuzz](https://github.com/SonexFuzz/), OpenShock support added by [RikkaDoesThings](https://github.com/RikkaDoesThings)
 Currently supported triggers:
