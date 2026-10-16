@@ -13,6 +13,9 @@
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
     </PropertyGroup>
+      <PropertyGroup>
+        <GamePluginDir Condition=" '$(GamePluginDir)' == '' ">$(APPDATA)\Thunderstore Mod Manager\DataFolder\WhiteKnuckle\profiles\Default\BepInEx\plugins\xironix-WKShock</GamePluginDir>
+      </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugSymbols>true</DebugSymbols>
@@ -34,29 +37,29 @@
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="0Harmony">
-          <HintPath>..\..\..\AppData\Roaming\r2modmanPlus-local\WhiteKnuckle\profiles\Modding\BepInEx\core\0Harmony.dll</HintPath>
+          <HintPath>Lib\0Harmony.dll</HintPath>
         </Reference>
         <Reference Include="ALINE">
-          <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\White Knuckle\White Knuckle_Data\Managed\ALINE.dll</HintPath>
+          <HintPath>Lib\ALINE.dll</HintPath>
         </Reference>
         <Reference Include="Assembly-CSharp">
-          <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\White Knuckle\White Knuckle_Data\Managed\Assembly-CSharp.dll</HintPath>
+          <HintPath>Lib\Assembly-CSharp.dll</HintPath>
         </Reference>
         <Reference Include="BepInEx">
-          <HintPath>..\..\..\AppData\Roaming\r2modmanPlus-local\WhiteKnuckle\profiles\Modding\BepInEx\core\BepInEx.dll</HintPath>
+          <HintPath>Lib\BepInEx.dll</HintPath>
         </Reference>
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
         <Reference Include="System.Net.Http">
-          <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\White Knuckle\White Knuckle_Data\Managed\System.Net.Http.dll</HintPath>
+          <HintPath>Lib\System.Net.Http.dll</HintPath>
         </Reference>
         <Reference Include="System.Xml"/>
         <Reference Include="UnityEngine">
-          <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\White Knuckle\White Knuckle_Data\Managed\UnityEngine.dll</HintPath>
+          <HintPath>Lib\UnityEngine.dll</HintPath>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
-          <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\White Knuckle\White Knuckle_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+          <HintPath>Lib\UnityEngine.CoreModule.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
@@ -68,9 +71,13 @@
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
-    <PropertyGroup>
-      <PostBuildEvent>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Users\justi2\AppData\Roaming\r2modmanPlus-local\WhiteKnuckle\profiles\Modding\BepInEx\plugins"</PostBuildEvent>
-    </PropertyGroup>
+    <Target Name="DeployToThunderstoreProfile" AfterTargets="Build" Condition="Exists('$(GamePluginDir)')">
+      <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GamePluginDir)" SkipUnchangedFiles="true" />
+      <Message Text="Deployed $(TargetFileName) to $(GamePluginDir)" Importance="high" />
+    </Target>
+    <Target Name="ReportMissingThunderstoreProfile" AfterTargets="Build" Condition="!Exists('$(GamePluginDir)')">
+      <Message Text="WKShock built but was not deployed. Set GamePluginDir to your active BepInEx plugin folder. Current value: $(GamePluginDir)" Importance="high" />
+    </Target>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">

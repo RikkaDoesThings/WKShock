@@ -1,3 +1,5 @@
 /WKShock/bin
 /WKShock/obj
 *.user
+/WKShock/Lib
+/Plugin

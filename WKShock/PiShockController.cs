@@ -39,32 +39,40 @@ namespace WKShock
 
                 var safeIntensity = Math.Max(1, Math.Min(100, intensity));
                 var safeDuration = Math.Max(1, Math.Min(10, duration));
-                var payload = string.Format(CultureInfo.InvariantCulture, "{{\"intensity\":{0},\"duration\":{1}}}", safeIntensity, safeDuration);
-
+                var operationType = normalizedOperation == "shock" ? 0 : 1;
+                var shockEntries = new List<string>();
                 foreach (var deviceId in _deviceIds)
                 {
-                    var endpoint = $"{_baseUrl.TrimEnd('/')}/v1/shockers/{Uri.EscapeDataString(deviceId)}/{normalizedOperation}";
-                    using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint))
-                    {
-                        request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
-                        if (!string.IsNullOrWhiteSpace(_apiToken))
-                        {
-                            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
-                        }
+                    shockEntries.Add(string.Format(CultureInfo.InvariantCulture,
+                        "{{\"id\":\"{0}\",\"type\":{1},\"intensity\":{2},\"duration\":{3}}}",
+                        deviceId, operationType, safeIntensity, safeDuration * 1000));
+                }
 
-                        try
+                var payload = "{\"shocks\":[" + string.Join(",", shockEntries) + "],\"customName\":\"WKShock\"}";
+                var endpoint = _baseUrl.TrimEnd('/') + "/1/shockers/control";
+                using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint))
+                {
+                    request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
+
+                    try
+                    {
+                        using (var response = await _httpClient.SendAsync(request))
                         {
-                            var response = await _httpClient.SendAsync(request);
                             if (!response.IsSuccessStatusCode)
                             {
                                 var body = await response.Content.ReadAsStringAsync();
-                                _logger.LogWarning($"OpenShock request failed for device {deviceId}: {(int)response.StatusCode} {response.ReasonPhrase} - {body}");
+                                _logger.LogWarning($"OpenShock request failed: {(int)response.StatusCode} {response.ReasonPhrase} - {body}");
+                            }
+                            else
+                            {
+                                _logger.LogInfo($"OpenShock {normalizedOperation} command accepted for {_deviceIds.Count} device(s).");
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning($"OpenShock request threw for device {deviceId}: {ex.Message}");
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"OpenShock request failed: {ex.Message}");
                     }
                 }
             });

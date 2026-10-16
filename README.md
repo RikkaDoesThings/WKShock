@@ -1,34 +1,20 @@
 # About
-A PiShock/OpenShock integration mod for White Knuckle.
-The mod uses the [PiShockLibrary](https://github.com/MxPuffin/PiShockLibrary) and some code from [REPOShock](https://github.com/MxPuffin/REPOShock) by [MxPuffin](https://github.com/MxPuffin).
-Created by [Xironix/SonexFuzz](https://github.com/SonexFuzz/), OpenShock support added by [RikkaDoesThings](https://github.com/RikkaDoesThings)
+An OpenShock integration mod for White Knuckle.
+Created by [Xironix/SonexFuzz](https://github.com/SonexFuzz/), with OpenShock support added by [RikkaDoesThings](https://github.com/RikkaDoesThings).
 Currently supported triggers:
 * Damage
 * Death
 
-The mod can send haptic events through either PiShock or OpenShock, depending on the configuration in the plugin config file.
+This build supports OpenShock. PiShock mode is not implemented; selecting it logs an error and no events are sent.
 
 # Configurations
 Install the mod, then edit the com.xironix.wkshock.cfg file in the config folder. Configuration in game is currently not implemented.
 
-## Choose your provider
-Set the following value in the config:
-* Use OpenShock = true to use OpenShock
-* Use OpenShock = false to use PiShock
-
-## PiShock setup
-If you are using PiShock, fill in:
-* Username
-* APIKey
-* ShareCodes
-
-You can get your PiShock username and API key from the PiShock account page, and your share codes from the PiShock control page.
-
 ## OpenShock setup
-If you are using OpenShock, fill in:
-* API Base URL (at the time of writing: https://api.openshock.org)
-* API Token (optional, only if your instance requires authentication)
-* Device IDs (comma-separated list of OpenShock device IDs)
+Set `Use OpenShock = true`, then fill in:
+* API Base URL (normally `https://api.openshock.org`)
+* API Token (a valid OpenShock bearer token is required)
+* Device IDs (comma-separated OpenShock device UUIDs; numeric IDs are not accepted)
 
 You can find device IDs in the OpenShock web app or API response.
 
