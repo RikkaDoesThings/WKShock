@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BepInEx.Configuration;
@@ -15,9 +16,6 @@ namespace WKShock
         private ConfigEntry<string> _apiBaseUrl;
         private ConfigEntry<string> _apiToken;
         private ConfigEntry<string> _deviceIds;
-        private ConfigEntry<string> _legacyApiBaseUrl;
-        private ConfigEntry<string> _legacyApiToken;
-        private ConfigEntry<string> _legacyDeviceIds;
         public ConfigEntry<bool> ModEnabled { get; private set; }
         public ConfigEntry<bool> EnableShock { get; private set; }
         public ConfigEntry<int> ShockIntensity { get; private set; }
@@ -33,14 +31,12 @@ namespace WKShock
         public PiShockLogin(ConfigFile config, ManualLogSource logger)
         {
             _logger = logger;
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
             _httpClient = new HttpClient();
-            _useOpenShock = config.Bind("1. Shock Provider", "Use OpenShock", true, "Set to true to use OpenShock, false to use PiShock.");
-            _apiBaseUrl = config.Bind("1. Shock Provider", "API Base URL", "https://api.openshock.org", "OpenShock API base URL.");
+            _useOpenShock = config.Bind("1. Shock Provider", "Use OpenShock", true, "OpenShock is the supported shock provider.");
+            _apiBaseUrl = config.Bind("1. Shock Provider", "API Base URL", "https://api.openshock.app", "OpenShock API base URL.");
             _apiToken = config.Bind("1. Shock Provider", "API Token", "", "OpenShock bearer token.");
             _deviceIds = config.Bind("1. Shock Provider", "Device IDs", "", "Comma-separated OpenShock device UUIDs.");
-            _legacyApiBaseUrl = config.Bind("1. Shock Credentials", "API Base URL", "", "Legacy OpenShock API base URL.");
-            _legacyApiToken = config.Bind("1. Shock Credentials", "API Token", "", "Legacy OpenShock API token.");
-            _legacyDeviceIds = config.Bind("1. Shock Credentials", "Device IDs", "", "Legacy comma-separated OpenShock device IDs.");
             ModEnabled = config.Bind("2. Gameplay Settings", "Mod Enabled", true, "Master switch to enable or disable all mod triggers.");
             EnableShock = config.Bind("3. Shock Settings", "Enable Shock", true, "Send a shock when taking damage.");
             ShockIntensity = config.Bind("3. Shock Settings", "Shock Intensity", 25, new ConfigDescription("Intensity of the shock (1-100).", new AcceptableValueRange<int>(1, 100)));
@@ -59,9 +55,9 @@ namespace WKShock
             {
                 if (_useOpenShock.Value)
                 {
-                    var deviceIdsValue = FirstConfiguredValue(_deviceIds.Value, _legacyDeviceIds.Value);
-                    var apiBaseUrl = FirstConfiguredValue(_apiBaseUrl.Value, _legacyApiBaseUrl.Value, "https://api.openshock.org");
-                    var apiToken = FirstConfiguredValue(_apiToken.Value, _legacyApiToken.Value);
+                    var deviceIdsValue = _deviceIds.Value;
+                    var apiBaseUrl = FirstConfiguredValue(_apiBaseUrl.Value, "https://api.openshock.app");
+                    var apiToken = _apiToken.Value;
 
                     if (string.IsNullOrWhiteSpace(deviceIdsValue))
                     {
@@ -81,6 +77,14 @@ namespace WKShock
                     {
                         _logger.LogError("OpenShock: API Base URL must be a valid HTTP or HTTPS URL.");
                         return;
+                    }
+
+                    if (string.Equals(parsedBaseUrl.Host, "api.openshock.org", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var updatedBaseUrl = new UriBuilder(parsedBaseUrl) { Host = "api.openshock.app" }.Uri.ToString();
+                        _apiBaseUrl.Value = updatedBaseUrl;
+                        parsedBaseUrl = new Uri(updatedBaseUrl);
+                        _logger.LogWarning("OpenShock API hostname api.openshock.org no longer resolves. Updated API Base URL to api.openshock.app.");
                     }
 
                     var deviceIds = new List<string>();

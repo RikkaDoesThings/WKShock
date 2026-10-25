@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx.Logging;
@@ -39,21 +38,22 @@ namespace WKShock
 
                 var safeIntensity = Math.Max(1, Math.Min(100, intensity));
                 var safeDuration = Math.Max(1, Math.Min(10, duration));
-                var operationType = normalizedOperation == "shock" ? 0 : 1;
+                var operationType = normalizedOperation == "shock" ? "Shock" : "Vibrate";
                 var shockEntries = new List<string>();
                 foreach (var deviceId in _deviceIds)
                 {
                     shockEntries.Add(string.Format(CultureInfo.InvariantCulture,
-                        "{{\"id\":\"{0}\",\"type\":{1},\"intensity\":{2},\"duration\":{3}}}",
+                        "{{\"id\":\"{0}\",\"type\":\"{1}\",\"intensity\":{2},\"duration\":{3}}}",
                         deviceId, operationType, safeIntensity, safeDuration * 1000));
                 }
 
                 var payload = "{\"shocks\":[" + string.Join(",", shockEntries) + "],\"customName\":\"WKShock\"}";
-                var endpoint = _baseUrl.TrimEnd('/') + "/1/shockers/control";
+                var endpoint = _baseUrl.TrimEnd('/') + "/2/shockers/control";
                 using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint))
                 {
                     request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
+                    request.Headers.Add("User-Agent", "WKShock/1.0.1");
+                    request.Headers.Add("Open-Shock-Token", _apiToken);
 
                     try
                     {
@@ -72,7 +72,7 @@ namespace WKShock
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning($"OpenShock request failed: {ex.Message}");
+                        _logger.LogWarning($"OpenShock request failed: {ex}");
                     }
                 }
             });

@@ -24,11 +24,12 @@ Install the mod, then edit the com.xironix.wkshock.cfg file in the config folder
 
 ## OpenShock setup
 Set `Use OpenShock = true`, then fill in:
-* API Base URL (normally `https://api.openshock.org`)
-* API Token (a valid OpenShock bearer token is required)
+* API Base URL (normally `https://api.openshock.app`)
+* API Token (a valid OpenShock API token is required)
 * Device IDs (comma-separated OpenShock device UUIDs; numeric IDs are not accepted)
 
 You can find device IDs in the OpenShock web app or API response.
+The mod sends commands through OpenShock's v2 shocker control endpoint. Requests include the required `User-Agent` and `Open-Shock-Token` headers.
 
 ## Gameplay settings
 The rest of the settings control when the plugin sends events:
