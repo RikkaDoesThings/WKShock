@@ -1,8 +1,3 @@
-```
-Hella finicky btw, remove the "Shock Credentials" section of the config and only use "Shock Provider"
-PiShock might not work.
-```
-
 # About
 An OpenShock integration mod for White Knuckle.
 
