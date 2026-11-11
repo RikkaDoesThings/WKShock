@@ -4,15 +4,8 @@ PiShock might not work.
 ```
 
 # About
-<<<<<<< HEAD
 An OpenShock integration mod for White Knuckle.
 Created by [Xironix/SonexFuzz](https://github.com/SonexFuzz/), with OpenShock support added by [RikkaDoesThings](https://github.com/RikkaDoesThings).
-=======
-A PiShock/OpenShock integration mod for White Knuckle.\
-The mod uses the [PiShockLibrary](https://github.com/MxPuffin/PiShockLibrary) and some code from [REPOShock](https://github.com/MxPuffin/REPOShock) by [MxPuffin](https://github.com/MxPuffin).
-Created by [Xironix/SonexFuzz](https://github.com/SonexFuzz/), OpenShock support added by [RikkaDoesThings](https://github.com/RikkaDoesThings).
-
->>>>>>> baaba0c381acfde99d31d2909ca442cff4009a7d
 Currently supported triggers:
 * Damage
 * Death
